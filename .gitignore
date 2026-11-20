@@ -1,0 +1,26 @@
+# fobis: build products, fetched dependencies, run directories and caches
+/build/
+/.fobis_deps/
+/.fobis/
+/compile_commands.json
+# build products of the fobos modes
+/exe/
+/lib/
+/obj/
+/mod/
+*.gcda
+*.gcno
+*.gcov
+# documentation
+/docs/node_modules/
+/docs/api/
+/docs/.vitepress/dist/
+/docs/.vitepress/cache/
+/docs/package-lock.json
+/docs/public/coverage.json
+
+# Python bytecode of the docs scripts
+__pycache__/
+
+# design notes and reference copies of the ADAM and FUNDAL handlers: local only, never tracked (as ELISHA's)
+/notes/

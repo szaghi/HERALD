@@ -1,0 +1,211 @@
+[project]
+name       = HERALD
+version    = VERSION
+summary    = HPC Environment, Ranks, Accounting, Logging, Devices: the MPI handler of HPC codes, with timers, memory budget and device binding
+repository = https://github.com/szaghi/HERALD
+website    = https://szaghi.github.io/HERALD
+email      = stefano.zaghi@gmail.com
+year       = 2026
+authors    = Stefano Zaghi
+
+# fobis scaffold: the CI runs in the fortran-toolchains images; the matrix builds tests-$TOOLCHAIN_FAMILY
+# (gnu, nvf, intel) on every Linux vendor and runs scripts/run_tests.sh
+[scaffold]
+toolchain = linux-gnu
+matrix    = linux-gnu linux-nvhpc linux-oneapi
+fpm       = true
+
+# the one-line installer (scripts/install.sh, rendered by fobis scaffold) builds the serial library, as fpm does: it
+# runs where no MPI may be (a fresh machine, the release's install check), and an MPI library must be built against
+# the site's own MPI, by the static-gnu/static-intel/static-nvf modes
+[installer]
+mode_gnu    = static-gnu-serial
+mode_intel  = static-intel-serial
+mode_nvidia = static-nvf-serial
+
+# fobis ecosystem check: what proves this project still works (HERALD has no dependencies: no fobis fetch)
+[ecosystem]
+check = fobis build --mode tests-gnu
+        bash scripts/run_tests.sh
+
+[modes]
+# the first mode is the default (fobis build): the MPI library any gfortran + Open MPI builds
+modes = static-gnu shared-gnu
+        static-nvf shared-nvf
+        static-intel shared-intel
+        static-gnu-serial static-nvf-serial static-intel-serial
+        tests-gnu tests-gnu-debug tests-gnu-coverage tests-gnu-serial
+        tests-nvf tests-nvf-debug tests-nvf-serial
+        tests-intel tests-intel-debug
+
+[common-variables]
+$STD_GNU = -std=f2018
+$STD_INT = -standard-semantics -std18
+
+# ── library modes (MPI) ──────────────────────────────────────────────────────
+[static-gnu]
+help      = Static library, gfortran + MPI, optimised
+template  = template-lib-static template-gnu template-mpi template-release
+build_dir = lib/gnu/static/
+
+[shared-gnu]
+help      = Shared library, gfortran + MPI, optimised
+template  = template-lib-shared template-gnu template-mpi template-release
+cflags    = -c -fPIC $STD_GNU
+build_dir = lib/gnu/shared/
+
+[static-nvf]
+help      = Static library, nvfortran + MPI (HPC-X), optimised
+template  = template-lib-static template-nvf template-mpi template-release
+build_dir = lib/nvf/static/
+
+[shared-nvf]
+help      = Shared library, nvfortran + MPI (HPC-X), optimised
+template  = template-lib-shared template-nvf template-mpi template-release
+cflags    = -c -fPIC
+build_dir = lib/nvf/shared/
+
+[static-intel]
+help      = Static library, ifx + MPI, optimised
+template  = template-lib-static template-intel-release template-intel template-mpi
+build_dir = lib/intel/static/
+
+[shared-intel]
+help      = Shared library, ifx + MPI, optimised
+template  = template-lib-shared template-intel template-mpi
+cflags    = -c -fPIC -O3 $STD_INT
+build_dir = lib/intel/shared/
+
+# ── serial library modes: no MPI (-DHERALD_NO_MPI), one rank ─────────────────
+[static-gnu-serial]
+help      = Static library, gfortran, serial (no MPI), optimised
+template  = template-lib-static template-serial template-gnu template-release
+build_dir = lib/gnu/static-serial/
+output    = libherald_serial.a
+
+[static-nvf-serial]
+help      = Static library, nvfortran, serial (no MPI), optimised
+template  = template-lib-static template-serial template-nvf template-release
+build_dir = lib/nvf/static-serial/
+output    = libherald_serial.a
+
+[static-intel-serial]
+help      = Static library, ifx, serial (no MPI), optimised
+template  = template-lib-static template-intel-release template-intel template-serial
+build_dir = lib/intel/static-serial/
+output    = libherald_serial.a
+
+# ── test modes: every program of src/tests into exe/, run by scripts/run_tests.sh ──
+[tests-gnu]
+help      = Tests, gfortran + MPI, optimised (fortran-toolchains matrix: family gnu)
+template  = template-tests template-gnu template-mpi template-release
+
+[tests-gnu-debug]
+help      = Tests, gfortran + MPI, all checks on
+template  = template-tests template-gnu template-mpi template-debug
+
+[tests-gnu-coverage]
+help      = Tests, gfortran + MPI, coverage instrumentation (rule makecoverage)
+template  = template-tests template-gnu template-mpi
+build_profile = coverage
+
+[tests-gnu-serial]
+help      = Tests, gfortran, serial (no MPI), optimised
+template  = template-tests template-serial template-gnu template-release
+
+[tests-nvf]
+help      = Tests, nvfortran + MPI (HPC-X), optimised, CPU (fortran-toolchains matrix: family nvf)
+template  = template-tests template-nvf template-mpi template-release
+
+[tests-nvf-debug]
+help      = Tests, nvfortran + MPI (HPC-X), all checks on
+template  = template-tests template-nvf template-mpi template-debug
+
+[tests-nvf-serial]
+help      = Tests, nvfortran, serial (no MPI), optimised, CPU
+template  = template-tests template-serial template-nvf template-release
+
+[tests-intel]
+help      = Tests, ifx + MPI, optimised (fortran-toolchains matrix: family intel)
+template  = template-tests template-intel-release template-intel template-mpi
+
+[tests-intel-debug]
+help      = Tests, ifx + MPI, all checks on
+template  = template-tests template-intel template-mpi template-debug
+
+# ── templates: left wins when a mode lists several, so the role template (lib, tests) comes first ──
+[template-base]
+src             = src/lib/
+obj_dir         = obj/
+mod_dir         = mod/
+cflags_heritage = True
+colors          = True
+jobs            = 8
+
+[template-gnu]
+template = template-base
+compiler = gnu
+cflags   = -c $STD_GNU
+
+[template-nvf]
+template = template-base
+compiler = nvfortran
+cflags   = -c
+
+[template-intel]
+template = template-base
+compiler = intel_nextgen
+cflags   = -c $STD_INT
+
+[template-release]
+build_profile = release
+
+# ifx without the release profile: its -ipo writes IR objects that the link (FoBiS passes no -ipo to it) and a plain
+# ar archive cannot read
+[template-intel-release]
+cflags = -c -O3 $STD_INT
+
+[template-debug]
+build_profile = debug
+
+[template-lib-static]
+target    = src/lib/herald.F90
+mklib     = static
+output    = libherald.a
+
+[template-lib-shared]
+target    = src/lib/herald.F90
+mklib     = shared
+output    = libherald.so
+
+[template-tests]
+src       = src/lib/ src/tests/
+build_dir = exe/
+
+# MPI: the compiler's wrapper (mpif90 of the Open MPI / HPC-X first on PATH); serial: the single-rank stub
+# (HERALD_NO_MPI), no MPI library at all
+[template-mpi]
+mpi = True
+
+[template-serial]
+preproc = -DHERALD_NO_MPI
+
+# ── rules ────────────────────────────────────────────────────────────────────
+[rule-makecoverage]
+help   = Build the tests with coverage instrumentation and run them
+rule_1 = fobis clean --mode tests-gnu-coverage
+rule_2 = fobis build --mode tests-gnu-coverage
+rule_3 = bash scripts/run_tests.sh
+
+[rule-makecoverage-analysis]
+help   = Coverage analysis: the badge JSON in docs/public/coverage.json (what CI runs)
+rule_1 = fobis rule --ex makecoverage
+rule_2 = bash scripts/compute-coverage.sh
+
+[rule-makedoc]
+help   = Build the documentation: formal API + VitePress
+rule_1 = cd docs && npm install --no-audit --no-fund && npm run docs:build
+
+[rule-clean]
+help = Remove build products and documentation artefacts
+rule = rm -rf exe/ lib/ obj/ mod/ docs/api/ docs/.vitepress/dist/ docs/.vitepress/cache/ docs/public/coverage.json

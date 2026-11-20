@@ -1,0 +1,39 @@
+name = "HERALD"
+version = "0.0.0"
+license = "GPL-3.0-or-later OR BSD-2-Clause OR BSD-3-Clause OR MIT"
+author = "Stefano Zaghi"
+maintainer = "stefano.zaghi@gmail.com"
+copyright = "Copyright 2026 Stefano Zaghi"
+homepage = "https://github.com/szaghi/HERALD"
+description = "HPC Environment, Ranks, Accounting, Logging, Devices: the MPI handler of HPC codes, with timers, memory budget and device binding"
+
+[library]
+source-dir = "src/lib"
+
+[build]
+auto-executables = false
+auto-tests = false
+auto-examples = false
+
+[fortran]
+implicit-typing = false
+implicit-external = false
+source-form = "free"
+
+# fpm builds the serial library (no MPI): the MPI builds are the fobos modes
+[preprocess]
+[preprocess.cpp]
+macros = ["HERALD_NO_MPI"]
+
+[install]
+library = true
+
+[[test]]
+name = "herald_test_kinds"
+source-dir = "src/tests"
+main = "herald_test_kinds.F90"
+
+[[test]]
+name = "herald_test_toolchain_mpi"
+source-dir = "src/tests"
+main = "herald_test_toolchain_mpi.F90"
