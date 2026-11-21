@@ -1,3 +1,7 @@
+---
+icon: ranks
+---
+
 # Quick start
 
 Build the library ([Installation](/guide/installation)), then one handler, initialized once:

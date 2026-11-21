@@ -1,3 +1,7 @@
+---
+icon: serial
+---
+
 # Build without MPI
 
 Compiled with `-DHERALD_NO_MPI`, HERALD uses no MPI library: one rank, rank 0, and the same interface. A program

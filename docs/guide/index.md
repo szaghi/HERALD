@@ -1,3 +1,7 @@
+---
+icon: ranks
+---
+
 # About
 
 HERALD (**H**PC **E**nvironment, **R**anks, **A**ccounting, **L**ogging, **D**evices) is the MPI handler of HPC

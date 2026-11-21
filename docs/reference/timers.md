@@ -1,3 +1,7 @@
+---
+icon: timers
+---
+
 # Timers
 
 Module `herald_timer_object`, type `timer_object`; the handler's are `mpih%timer`.

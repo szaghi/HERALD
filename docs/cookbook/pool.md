@@ -1,3 +1,7 @@
+---
+icon: memory
+---
+
 # Size a pool from the budget
 
 A program that allocates most of its memory once (a block pool, a field for every cell) can size it from what the

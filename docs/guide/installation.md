@@ -1,3 +1,7 @@
+---
+icon: serial
+---
+
 # Installation
 
 HERALD has no dependencies: a Fortran compiler and, for the MPI builds, the MPI whose wrapper (`mpif90`) is first on

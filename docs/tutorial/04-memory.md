@@ -1,5 +1,6 @@
 ---
 title: 4. Memory
+icon: memory
 ---
 
 # 4. Memory
@@ -23,6 +24,8 @@ replaces the kill of the out-of-memory handler after it.
 ## What the process uses
 
 <<< @/examples/snippets/t04_memory-use.F90{fortran}
+
+<HeraldIcon name="peak" :size="40" label="peak tracking" float />
 
 `used()` is the resident memory now, `peak()` its highest value so far.
 

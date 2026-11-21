@@ -1,3 +1,7 @@
+---
+icon: device
+---
+
 # Time a region on a GPU
 
 A region that launches asynchronous device work returns before the work is done: timed as it is, it looks fast and

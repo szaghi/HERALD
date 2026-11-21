@@ -1,3 +1,7 @@
+---
+icon: memory
+---
+
 # Memory
 
 Module `herald_memory_object`, type `memory_object`; the handler's is `mpih%memory`. Host memory only: the device's

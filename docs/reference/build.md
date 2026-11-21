@@ -1,3 +1,7 @@
+---
+icon: serial
+---
+
 # Build: macros and modes
 
 ## Macros

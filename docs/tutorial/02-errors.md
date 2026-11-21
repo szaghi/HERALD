@@ -1,5 +1,6 @@
 ---
 title: 2. Errors
+icon: abort
 ---
 
 # 2. Errors

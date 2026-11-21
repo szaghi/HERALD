@@ -1,5 +1,6 @@
 ---
 title: 1. Ranks and messages
+icon: ranks
 ---
 
 # 1. Ranks and messages

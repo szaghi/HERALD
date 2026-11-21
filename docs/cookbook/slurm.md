@@ -1,3 +1,7 @@
+---
+icon: memory
+---
+
 # Run under Slurm
 
 A job that asks for part of a node's memory (`--mem`, `--mem-per-cpu`) lives in a memory cgroup with that limit.

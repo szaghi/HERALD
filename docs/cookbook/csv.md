@@ -1,3 +1,7 @@
+---
+icon: report
+---
+
 # A CSV for a scaling study
 
 `timer%report_csv_string()` returns the table of the report for a program to read. It is collective, as the report

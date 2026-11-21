@@ -121,3 +121,36 @@
   outline: 2px solid var(--herald-focus);
   outline-offset: 2px;
 }
+
+/* ---------- Layout (not identity): the identity's icons in the pages ----------
+   <HeraldIcon> (HeraldIcon.vue) draws the light or the dark drawing of an icon, by theme; inline it sits on the
+   text's baseline. The page icon (frontmatter `icon:`) stands above the title. */
+.herald-icon {
+  display: inline-block;
+  vertical-align: -0.35em;
+  line-height: 0;
+}
+.herald-icon img {
+  width: 100%;
+  height: 100%;
+}
+.herald-icon .herald-icon-dark { display: none; }
+.dark .herald-icon .herald-icon-light { display: none; }
+.dark .herald-icon .herald-icon-dark { display: inline; }
+/* <HeraldIcon float> alone on a line before a paragraph: the paragraph wraps around it, the next heading clears it */
+.vp-doc .herald-icon-float {
+  float: left;
+  margin: 0.15em 0.7em 0.2em 0;
+}
+.vp-doc h2,
+.vp-doc h3 { clear: both; }
+.herald-page-icon {
+  margin: 0 0 4px;
+  line-height: 0;
+}
+/* the licence line of the footer opens with the licences icon */
+.VPFooter .herald-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.4em;
+}

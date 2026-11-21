@@ -1,5 +1,6 @@
 ---
 title: 5. A communicator of your own
+icon: ranks
 ---
 
 # 5. A communicator of your own

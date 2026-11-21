@@ -103,7 +103,11 @@ export default withMermaid({
     },
 
     footer: {
-      message: 'Released under your choice of the GPL v3, BSD-2-Clause, BSD-3-Clause or MIT license.',
+      // VPFooter renders the message as HTML: the licences icon of the identity, light or dark (custom.css)
+      message: '<span class="herald-icon" aria-hidden="true">'
+        + '<img class="herald-icon-light" src="/HERALD/icons/licences.svg" alt="" width="20" height="20">'
+        + '<img class="herald-icon-dark" src="/HERALD/icons/licences-dark.svg" alt="" width="20" height="20"></span>'
+        + 'Released under your choice of the GPL v3, BSD-2-Clause, BSD-3-Clause or MIT license.',
       copyright: 'Copyright © 2026 Stefano Zaghi',
     },
   },

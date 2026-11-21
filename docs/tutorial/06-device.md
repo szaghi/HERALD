@@ -1,5 +1,6 @@
 ---
 title: 6. Devices
+icon: device
 ---
 
 # 6. Devices

@@ -1,3 +1,7 @@
+---
+icon: ranks
+---
+
 # A program that initializes MPI itself
 
 Who initializes MPI finalizes it. When the program, or a library called before HERALD, calls `MPI_INIT`, the handler

@@ -1,3 +1,7 @@
+---
+icon: ranks
+---
+
 # The handler
 
 Module `herald_mpih_object`, type `mpih_object`.

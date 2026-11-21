@@ -1,5 +1,6 @@
 ---
 title: 3. Timers
+icon: timers
 ---
 
 # 3. Timers
@@ -17,6 +18,8 @@ every timed region changes what is measured.
 
 <<< @/examples/snippets/t03_timers-statistics.F90{fortran}
 
+<HeraldIcon name="imbalance" :size="40" label="load imbalance" float />
+
 `statistics` reduces the timers over the ranks. The ratio maximum/mean is the load imbalance of the region; the
 ratio CPU/wall tells computing (near 1) from waiting (near 0: here the ranks sleep).
 
@@ -25,6 +28,8 @@ ratio CPU/wall tells computing (near 1) from waiting (near 0: here the ranks sle
 ## The report
 
 <<< @/examples/snippets/t03_timers-report.F90{fortran}
+
+<HeraldIcon name="report" :size="40" label="table and CSV report" float />
 
 `report` prints the same reductions as a table, on rank 0. Its numbers change from run to run; this one was captured
 by hand:

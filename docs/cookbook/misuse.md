@@ -1,3 +1,7 @@
+---
+icon: timers
+---
+
 # Find a mismatched tic/toc
 
 A `toc` with no `tic`, a `tic` of a timer that is already running, a name misspelled once: the timers go on returning

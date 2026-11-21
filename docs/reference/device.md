@@ -1,3 +1,7 @@
+---
+icon: device
+---
+
 # Devices
 
 Module `herald_device_object`, type `device_object`; the handler's is `mpih%device`, filled by
