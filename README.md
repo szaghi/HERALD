@@ -1,5 +1,11 @@
 <div align="center">
 
+<picture>
+  <source media="(prefers-color-scheme: dark)"  srcset="docs/public/logo-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/public/logo.svg">
+  <img src="docs/public/logo.svg" alt="HERALD, a wild goose carrying a letter across the moon" width="320">
+</picture>
+
 # HERALD
 
 #### *The MPI handler of HPC codes: one object that knows where the program runs and speaks for its ranks*

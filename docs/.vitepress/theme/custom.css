@@ -1,0 +1,123 @@
+/* HERALD · Kari no tsukai 雁の使い in Gin-getsu 銀月 — Sumi family tokens for VitePress.
+   Silver paper is :root, the moonless night is .dark. Every text pair is at least 4.5:1 on its ground.
+   Gin-getsu leaves the family's warm washi for a cool silver paper (#eef0f2) and a deeper night (#0b0e13).
+   The letter and the seal take the ice blue (#8cc8ff at night, #2f6fb5 by day); links and the
+   primary button use #235d9c by day. The moon and skein greys are for the mark only, never text. */
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --vp-font-family-base: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --vp-font-family-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --herald-font-display: 'Shippori Mincho', 'Hiragino Mincho ProN', serif;
+  /* ground: silver paper */
+  --vp-c-bg: #eef0f2;
+  --vp-c-bg-alt: #e4e7eb;
+  --vp-c-bg-elv: #f6f7f8;
+  --vp-c-bg-soft: #e4e7eb;
+  --vp-c-divider: #d6dadf;
+  --vp-c-gutter: #d6dadf;
+  --vp-c-border: #69717b;
+  /* ink */
+  --vp-c-text-1: #16191d;
+  --vp-c-text-2: #535a63;
+  --vp-c-text-3: #535a63;
+  /* gin-getsu: links, active nav, primary button */
+  --vp-c-brand-1: #235d9c;
+  --vp-c-brand-2: #1a4a7f;
+  --vp-c-brand-3: #235d9c;
+  --vp-c-brand-soft: rgba(47, 111, 181, 0.12);
+  --vp-button-brand-bg: #235d9c;
+  --vp-button-brand-border: #235d9c;
+  --vp-button-brand-text: #ffffff;
+  --vp-button-brand-hover-bg: #1a4a7f;
+  --vp-button-brand-hover-border: #1a4a7f;
+  --vp-button-brand-hover-text: #ffffff;
+  --vp-button-brand-active-bg: #1a4a7f;
+  --vp-button-brand-active-border: #1a4a7f;
+  --vp-button-brand-active-text: #ffffff;
+  --vp-button-alt-border: #69717b;
+  /* the mark: fills only, never text */
+  --herald-moon: #7d8794;
+  --herald-skein: #16191d;
+  --herald-letter: #2f6fb5;
+  --herald-seal: #2f6fb5;
+  --herald-mesh: #69717b;
+  --herald-focus: #16191d;
+  --vp-home-hero-name-color: #16191d;
+  --vp-code-block-bg: #e4e7eb;
+  /* no glow behind the mark: the ink carries it */
+  --vp-home-hero-image-background-image: none;
+  --vp-home-hero-image-filter: none;
+}
+
+.dark {
+  /* ground: the moonless night */
+  --vp-c-bg: #0b0e13;
+  --vp-c-bg-alt: #080a0e;
+  --vp-c-bg-elv: #141922;
+  --vp-c-bg-soft: #080a0e;
+  --vp-c-divider: #222a35;
+  --vp-c-gutter: #222a35;
+  --vp-c-border: #7b8592;
+  /* ink */
+  --vp-c-text-1: #f2efe8;
+  --vp-c-text-2: #a9b1bb;
+  --vp-c-text-3: #a9b1bb;
+  /* gin-getsu: links, active nav, primary button */
+  --vp-c-brand-1: #a6d5ff;
+  --vp-c-brand-2: #8cc8ff;
+  --vp-c-brand-3: #8cc8ff;
+  --vp-c-brand-soft: rgba(140, 200, 255, 0.16);
+  --vp-button-brand-bg: #8cc8ff;
+  --vp-button-brand-border: #8cc8ff;
+  --vp-button-brand-text: #0b0e13;
+  --vp-button-brand-hover-bg: #5fa8e6;
+  --vp-button-brand-hover-border: #5fa8e6;
+  --vp-button-brand-hover-text: #0b0e13;
+  --vp-button-brand-active-bg: #5fa8e6;
+  --vp-button-brand-active-border: #5fa8e6;
+  --vp-button-brand-active-text: #0b0e13;
+  --vp-button-alt-border: #7b8592;
+  /* the mark: fills only */
+  --herald-moon: #c3ccd6;
+  --herald-skein: #8b96a3;
+  --herald-letter: #8cc8ff;
+  --herald-seal: #8cc8ff;
+  --herald-mesh: #7b8592;
+  --herald-focus: #a6d5ff;
+  --vp-home-hero-name-color: #f2efe8;
+  --vp-code-block-bg: #080a0e;
+}
+
+/* names in the display face, tracked wide */
+.VPNavBarTitle .title,
+.VPHero .name,
+.VPHero .name .clip {
+  font-family: var(--herald-font-display);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.VPHero .name .clip {
+  background: none;
+  -webkit-text-fill-color: var(--vp-home-hero-name-color);
+  color: var(--vp-home-hero-name-color);
+}
+
+/* the mark in the hero: square, no shadow */
+.VPHero .image-src {
+  max-width: 320px;
+  max-height: 320px;
+}
+
+/* feature icons are drawn at 24 units: show them at 44 px, no tile */
+.VPFeature .icon {
+  width: 52px;
+  height: 52px;
+  background-color: transparent;
+}
+
+/* keyboard focus: solid 2px ring with 2px of ground */
+:focus-visible {
+  outline: 2px solid var(--herald-focus);
+  outline-offset: 2px;
+}

@@ -10,7 +10,16 @@ export default withMermaid({
   title: 'HERALD',
   description: 'HPC Environment, Ranks, Accounting, Logging, Devices: the MPI handler of HPC codes, with timers, memory budget and device binding',
   base: '/HERALD/',
-  srcExclude: ['ford.md'],
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/HERALD/favicon.svg', media: '(prefers-color-scheme: light)' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/HERALD/favicon-dark.svg', media: '(prefers-color-scheme: dark)' }],
+    ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/HERALD/favicon-32.png' }],
+    ['link', { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/HERALD/favicon-16.png' }],
+    ['link', { rel: 'apple-touch-icon', sizes: '180x180', href: '/HERALD/apple-touch-icon.png' }],
+    ['meta', { name: 'theme-color', content: '#eef0f2', media: '(prefers-color-scheme: light)' }],
+    ['meta', { name: 'theme-color', content: '#0b0e13', media: '(prefers-color-scheme: dark)' }],
+  ],
+  srcExclude: ['ford.md', 'brand/**'],
 
   markdown: {
     math: true,
@@ -24,6 +33,7 @@ export default withMermaid({
   },
 
   themeConfig: {
+    logo: { light: '/logo-nav.svg', dark: '/logo-nav-dark.svg', alt: 'HERALD' },
     siteTitle: 'HERALD',
     nav: [
       { text: 'Start',     link: '/guide/' },
