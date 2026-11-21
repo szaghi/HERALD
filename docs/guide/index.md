@@ -31,6 +31,6 @@ no MPI library at all: one rank, the same interface.
 
 ## Status
 
-Not released yet. The handler is tested with gfortran, nvfortran and ifx, with and without MPI; the OpenACC device
+The handler is tested with gfortran, nvfortran and ifx, with and without MPI; the OpenACC device
 layer has run on NVIDIA GPUs with nvfortran, the OpenMP one with gfortran. The device memory query of AMD's HIP
 runtime (`-DHERALD_HIP`) is written and not compiled by any mode.

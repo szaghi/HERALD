@@ -52,7 +52,7 @@ fpm builds the serial library (`HERALD_NO_MPI`); the MPI and device builds are t
 curl -fsSL https://github.com/szaghi/HERALD/releases/latest/download/install.sh | bash -s -- --prefix ~/.local
 ```
 
-Available from the first release. It builds the serial library: an MPI library must be built against the site's own
+It builds the serial library: an MPI library must be built against the site's own
 MPI, with the modes above.
 
 ## Tests

@@ -10,6 +10,7 @@
 > prefix, a fatal path that stops every rank, and the binding of ranks to devices, in modern Fortran with no
 > dependencies. It replaces the `mpih_object` classes that ADAM and FUNDAL each carried.
 
+[![Version](https://img.shields.io/github/v/release/szaghi/HERALD?label=version)](https://github.com/szaghi/HERALD/releases)
 [![CI](https://github.com/szaghi/HERALD/actions/workflows/ci.yml/badge.svg)](https://github.com/szaghi/HERALD/actions/workflows/ci.yml)
 [![Matrix](https://github.com/szaghi/HERALD/actions/workflows/matrix.yml/badge.svg)](https://github.com/szaghi/HERALD/actions/workflows/matrix.yml)
 [![Docs examples](https://github.com/szaghi/HERALD/actions/workflows/docs-examples.yml/badge.svg)](https://github.com/szaghi/HERALD/actions/workflows/docs-examples.yml)
@@ -87,8 +88,8 @@ FUNDAL's handler: [what changes](https://szaghi.github.io/HERALD/guide/migration
 
 ## Status
 
-Not released yet. The device memory query of AMD's HIP runtime (`-DHERALD_HIP`) is written and not compiled by any
-build mode.
+The device layer has run on NVIDIA GPUs with OpenACC (nvfortran) and with OpenMP (gfortran). The device memory query
+of AMD's HIP runtime (`-DHERALD_HIP`) is written and not compiled by any build mode.
 
 ## Authors
 
