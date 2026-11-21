@@ -8,12 +8,15 @@ module herald_mpih_object
 !< The library exports the type, not an instance: the program owns its handler.
 use, intrinsic :: iso_c_binding,   only : C_INT
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit, stdout=>output_unit
-use            :: herald_kinds,    only : I4P
+use            :: herald_kinds,    only : I4P, R8P
 use            :: herald_mpi
 use            :: herald_strings,  only : str, strz
+use            :: herald_timer_object, only : timer_object
 implicit none
 private
 public :: mpih_object
+
+character(*), parameter :: ANONYMOUS_TIMER='tic-toc' !< Name of the timer of `tic` and `toc` without a name.
 
 interface
    function c_usleep(useconds) bind(C, name='usleep') result(ierr)
@@ -36,6 +39,9 @@ type :: mpih_object
    integer(I4P)              :: error=0_I4P                !< Error status of the last operation.
    logical                   :: is_initialized=.false.     !< `initialize` ran: later calls return at once.
    logical                   :: owns_mpi=.false.           !< `initialize` initialized MPI: `finalize` finalizes it.
+   type(timer_object)        :: timer                      !< Named timers, reduced over the ranks of `comm`.
+   real(R8P)                 :: timing(1:2)=0._R8P         !< Clock at the two last timed barriers (`barrier(tictoc=)`).
+   integer(I4P)              :: tictoc=1_I4P               !< Slot of `timing` the next timed barrier fills.
    contains
       procedure, pass(self) :: abort         !< Stop every rank with an error code and an optional message.
       procedure, pass(self) :: barrier       !< Block until every rank of `comm` has called it.
@@ -46,6 +52,9 @@ type :: mpih_object
       procedure, pass(self) :: is_root       !< Return true on rank 0 of `comm`.
       procedure, pass(self) :: prefix        !< Return the rank prefix of the messages (empty before `initialize`).
       procedure, pass(self) :: print_message !< Print a message on stdout with the rank prefix.
+      procedure, pass(self) :: tic           !< Start a timer (the anonymous one without a name).
+      procedure, pass(self) :: tictoc_timing !< Return the seconds between the two last timed barriers.
+      procedure, pass(self) :: toc           !< Stop a timer and return the seconds from its `tic`.
       procedure, pass(self) :: warning       !< Print a warning on stderr with the rank prefix.
 endtype mpih_object
 
@@ -68,11 +77,28 @@ contains
    endif
    endsubroutine abort
 
-   subroutine barrier(self)
-   !< Block until every rank of `comm` has called it (collective).
-   class(mpih_object), intent(in) :: self !< MPI handler.
+   subroutine barrier(self, tictoc, timing, single)
+   !< Block until every rank of `comm` has called it (collective); on demand, read the clock after it.
+   !<
+   !< The timing arguments are those of ADAM's and FUNDAL's handlers: with `tictoc=.true.` the clock after the barrier
+   !< fills, in turn, the two slots of `timing(1:2)`, and `tictoc_timing()` returns their difference; `single=.true.`
+   !< does not advance to the other slot. New code should use the named timers, `tic(name, sync=.true.)` and `toc`.
+   class(mpih_object), intent(inout)         :: self    !< MPI handler.
+   logical,            intent(in),  optional :: tictoc  !< Read the clock after the barrier (default .false.).
+   real(R8P),          intent(out), optional :: timing  !< The clock read.
+   logical,            intent(in),  optional :: single  !< Do not advance to the other slot (default .false.).
+   logical                                   :: tictoc_ !< Read the clock, local variable.
+   logical                                   :: single_ !< Do not advance, local variable.
 
+   tictoc_ = .false. ; if (present(tictoc)) tictoc_ = tictoc
+   single_ = .false. ; if (present(single)) single_ = single
    call hmpi_barrier(self%comm)
+   if (present(timing)) timing = 0._R8P
+   if (tictoc_) then
+      self%timing(self%tictoc) = hmpi_wtime()
+      if (present(timing)) timing = self%timing(self%tictoc)
+      if (.not.single_) self%tictoc = 3_I4P - self%tictoc
+   endif
    endsubroutine barrier
 
    pure function description(self) result(desc)
@@ -160,6 +186,7 @@ contains
    call hmpi_split_node(comm=self%comm, node_comm=self%node_comm)
    self%node_myrank = hmpi_rank(self%node_comm)
    self%node_procs_number = max(1_I4P, hmpi_size(self%node_comm))
+   call self%timer%initialize(comm=self%comm)
    self%is_initialized = .true.
    if (verbose_) print '(A)', self%description()
    endsubroutine initialize
@@ -207,6 +234,42 @@ contains
    endif
    write(stderr, '(A)') self%prefix()//'warning: '//trim(adjustl(msg))
    endsubroutine warning
+
+   subroutine tic(self, name, sync)
+   !< Start a timer: the named one of `timer` (created at its first `tic`), or the anonymous one without a name.
+   class(mpih_object), intent(inout)        :: self !< MPI handler.
+   character(*),       intent(in), optional :: name !< Timer name (default: the anonymous timer).
+   logical,            intent(in), optional :: sync !< Barrier on `comm` first (default .false.).
+
+   if (present(name)) then
+      call self%timer%start(name=name, sync=sync)
+   else
+      call self%timer%start(name=ANONYMOUS_TIMER, sync=sync)
+   endif
+   endsubroutine tic
+
+   pure function tictoc_timing(self) result(timing)
+   !< Return the seconds between the two last timed barriers (`barrier(tictoc=.true.)`).
+   class(mpih_object), intent(in) :: self   !< MPI handler.
+   real(R8P)                      :: timing !< Seconds between the two clocks.
+
+   timing = abs(self%timing(2) - self%timing(1))
+   endfunction tictoc_timing
+
+   function toc(self, name, sync) result(timing)
+   !< Stop a timer and return the seconds from its `tic` (0 if it was not started); the interval is added to the
+   !< timer's total, which `timer%report` reduces over the ranks.
+   class(mpih_object), intent(inout)        :: self   !< MPI handler.
+   character(*),       intent(in), optional :: name   !< Timer name (default: the anonymous timer).
+   logical,            intent(in), optional :: sync   !< Barrier on `comm` first (default .false.).
+   real(R8P)                                :: timing !< Seconds from the `tic`.
+
+   if (present(name)) then
+      timing = self%timer%stop(name=name, sync=sync)
+   else
+      timing = self%timer%stop(name=ANONYMOUS_TIMER, sync=sync)
+   endif
+   endfunction toc
 
    ! private non TBP
    subroutine die(self, msg, error_code)
