@@ -8,7 +8,8 @@ module herald_mpih_object
 !< The library exports the type, not an instance: the program owns its handler.
 use, intrinsic :: iso_c_binding,   only : C_INT
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit, stdout=>output_unit
-use            :: herald_kinds,    only : I4P, R8P
+use            :: herald_kinds,    only : I4P, I8P, R8P
+use            :: herald_memory_object, only : memory_object
 use            :: herald_mpi
 use            :: herald_strings,  only : str, strz
 use            :: herald_timer_object, only : timer_object
@@ -39,12 +40,15 @@ type :: mpih_object
    integer(I4P)              :: error=0_I4P                !< Error status of the last operation.
    logical                   :: is_initialized=.false.     !< `initialize` ran: later calls return at once.
    logical                   :: owns_mpi=.false.           !< `initialize` initialized MPI: `finalize` finalizes it.
+   type(memory_object)       :: memory                     !< Host memory: the budget of the rank and its use.
+   real(R8P)                 :: memory_avail=0._R8P        !< Host memory budget of the rank at `initialize`, GB.
    type(timer_object)        :: timer                      !< Named timers, reduced over the ranks of `comm`.
    real(R8P)                 :: timing(1:2)=0._R8P         !< Clock at the two last timed barriers (`barrier(tictoc=)`).
    integer(I4P)              :: tictoc=1_I4P               !< Slot of `timing` the next timed barrier fills.
    contains
       procedure, pass(self) :: abort         !< Stop every rank with an error code and an optional message.
       procedure, pass(self) :: barrier       !< Block until every rank of `comm` has called it.
+      procedure, pass(self) :: check_memory  !< Stop every rank if a number of bytes does not fit the rank's budget.
       procedure, pass(self) :: description   !< Return a pretty-printed description of the handler.
       procedure, pass(self) :: error_stop    !< Stop every rank with an error message, exit status 1.
       procedure, pass(self) :: finalize      !< Free the handler, and finalize MPI if the handler initialized it.
@@ -101,7 +105,20 @@ contains
    endif
    endsubroutine barrier
 
-   pure function description(self) result(desc)
+   subroutine check_memory(self, bytes_needed, what)
+   !< Stop every rank if a number of bytes, on top of what the process uses, does not fit the rank's memory budget
+   !< (see `memory_object%check`): a readable error before the allocation, in place of the OOM handler's kill after.
+   class(mpih_object), intent(inout)        :: self         !< MPI handler.
+   integer(I8P),       intent(in)           :: bytes_needed !< Bytes about to be allocated.
+   character(*),       intent(in), optional :: what         !< What the bytes are for.
+   logical                                  :: is_ok        !< They fit.
+   character(:), allocatable                :: msg          !< The numbers, in words.
+
+   call self%memory%check(bytes_needed=bytes_needed, is_ok=is_ok, msg=msg, what=what)
+   if (.not.is_ok) call self%error_stop(msg='not enough host memory, '//msg)
+   endsubroutine check_memory
+
+   function description(self) result(desc)
    !< Return a pretty-printed description of the handler.
    class(mpih_object), intent(in) :: self             !< MPI handler.
    character(:), allocatable      :: desc             !< Description.
@@ -114,7 +131,8 @@ contains
    desc = desc//p//'  myrank:            '//str(self%myrank)//NL
    desc = desc//p//'  procs_number:      '//str(self%procs_number)//NL
    desc = desc//p//'  node myrank:       '//str(self%node_myrank)//NL
-   desc = desc//p//'  node procs_number: '//str(self%node_procs_number)
+   desc = desc//p//'  node procs_number: '//str(self%node_procs_number)//NL
+   desc = desc//self%memory%description(prefix=p)
    endfunction description
 
    subroutine error_stop(self, msg)
@@ -187,6 +205,8 @@ contains
    self%node_myrank = hmpi_rank(self%node_comm)
    self%node_procs_number = max(1_I4P, hmpi_size(self%node_comm))
    call self%timer%initialize(comm=self%comm)
+   call self%memory%initialize(comm=self%comm, node_procs_number=self%node_procs_number)
+   self%memory_avail = real(self%memory%per_rank(), R8P)/1024._R8P**3
    self%is_initialized = .true.
    if (verbose_) print '(A)', self%description()
    endsubroutine initialize
