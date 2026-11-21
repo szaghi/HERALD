@@ -81,7 +81,9 @@ if (mpih%tictoc_timing() < NAP .or. mpih%tictoc_timing() > mpih%procs_number*NAP
 if (abs(t - mpih%timing(2)) > 0._R8P .or. mpih%tictoc /= 1) call fail('timing of the second barrier')
 ! device synchronization: called at each start and stop
 call mpih%timer%set_device_sync(device_sync=count_device_sync)
-call mpih%tic(name='device') ; t = mpih%toc(name='device')
+call mpih%tic(name='device')
+cerr = c_usleep(int(NAP*1.e6_R8P, C_INT)) ! a measurable interval on any clock (the serial one may tick in ms)
+t = mpih%toc(name='device')
 call mpih%timer%set_device_sync()
 call mpih%tic(name='device') ; t = mpih%toc(name='device')
 if (device_syncs /= 2) call fail('the device synchronization must be called twice')

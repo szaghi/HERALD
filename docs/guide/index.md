@@ -15,4 +15,5 @@ files). Built with `-DHERALD_NO_MPI` it is a single-rank stub with the same inte
 
 ## Status
 
-The repository is being seeded: the build, the tests and the CI are in place, the handler is not written yet.
+The handler is written and tested on the host with gfortran and nvfortran, with and without MPI. Its device layer
+(OpenACC) is compiled and tested on the host device type only: it has not run on a GPU yet. Not released.

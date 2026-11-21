@@ -12,7 +12,8 @@ logging with a fatal path that stops every rank, and the binding of ranks to dev
 classes that ADAM and FUNDAL each carried. No dependencies: MPI, the compiler and Linux. Built without MPI
 (`-DHERALD_NO_MPI`) it is a single-rank stub with the same interface.
 
-The repository is being seeded: the build, the tests and the CI are in place, the handler is not written yet.
+The handler is written and tested on the host with gfortran and nvfortran, with and without MPI. Its device layer
+(OpenACC) is compiled and tested on the host device type only: it has not run on a GPU yet. Not released.
 
 ```bash
 fobis build --mode tests-gnu && bash scripts/run_tests.sh
