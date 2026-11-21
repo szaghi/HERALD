@@ -4,6 +4,17 @@ All notable changes to this project are documented here.
 Versions follow [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.1] — 2026-11-21
+### Documentation
+- V0.1.0 is released
+
+- New identity, Kari no tsukai in Gin-getsu (Sumi family)
+
+- The identity's icons on the guide, tutorial, cookbook and reference pages
+
+- **theme**: The Mermaid diagrams of the API pages in the identity
+
+
 ## [0.1.0] — 2026-11-21
 ### Added
 - Scaffold HERALD, the MPI handler library for HPC codes
