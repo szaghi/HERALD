@@ -39,7 +39,7 @@ exported.
 | `node_comm`, `node_myrank`, `node_procs_number` | the ranks that share this node's memory |
 | `print_message`, `warning` | messages with the rank prefix, `root_only=.true.` for rank 0 alone |
 | `error_stop`, `abort` | stop **every** rank, exit status 1 |
-| `tic`, `toc`, `timer%report` | named accumulating timers, reduced over the ranks |
+| `tic`, `toc`, `timer%report` | named accumulating timers, reduced over the ranks: min, mean, max, imbalance, seconds per call, CPU/wall, misuses; `timer%report(csv=.true.)` for a program to read |
 | `memory%per_rank()`, `memory%used()`, `memory%peak()`, `check_memory` | the memory budget of the rank and its use, bytes |
 | `device%mydev`, `device%sharers`, `device%per_sharer()` | the device of the rank, the ranks sharing it, its memory share |
 

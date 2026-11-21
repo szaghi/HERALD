@@ -46,6 +46,11 @@ logical                :: is_consistent             !< Same timers on every rank
 character(:), allocatable :: text                   !< Report.
 integer(I4P)           :: i, s                      !< Counter, timer index.
 integer(C_INT)         :: cerr                      !< usleep status.
+real(R8P), allocatable :: per_call(:), cpu_wall(:)  !< Statistics.
+integer(I8P), allocatable :: calls(:), misuse(:)    !< Statistics.
+integer(I8P)           :: unknown_stops             !< Stops of names never started, all the ranks.
+real(R8P)              :: cpu0, cpu1, x             !< CPU clocks, work.
+integer(I4P)           :: b, d, lines               !< Timer indexes, lines of the CSV.
 
 call mpih%initialize
 mine = real(mpih%myrank + 1, R8P)*NAP
@@ -93,6 +98,57 @@ if (mpih%timer%elapsed('sleep') > 0._R8P .or. mpih%timer%calls(s) /= 0_I8P) call
 if (mpih%timer%elapsed('device') <= 0._R8P) call fail('reset of one timer zeroed another')
 call mpih%timer%reset
 if (mpih%timer%elapsed('device') > 0._R8P .or. mpih%timer%timers_number /= 3) call fail('reset of all')
+! CPU time: a rank that computes for about 0.1 s has CPU/wall near 1, one that sleeps has it near 0
+if (mpih%timer%misuses() /= 0_I8P) call fail('no misuse is expected after a reset of all')
+call mpih%tic(name='busy')
+call cpu_time(cpu0) ; cpu1 = cpu0 ; x = 0._R8P ; i = 0
+do while (cpu1 - cpu0 < 2*NAP)
+   i = i + 1 ; x = x + sin(real(i, R8P))
+   if (mod(i, 1000) == 0) call cpu_time(cpu1)
+enddo
+t = mpih%toc(name='busy')
+if (x > real(i, R8P)) call fail('busy work')
+call mpih%tic(name='idle')
+cerr = c_usleep(int(4*NAP*1.e6_R8P, C_INT))
+t = mpih%toc(name='idle')
+! the loop above ends on the intrinsic cpu_time, which is the wall clock with nvfortran: a rank descheduled meanwhile
+! has used less CPU than that, hence the low bound at a fifth
+if (mpih%timer%elapsed_cpu('busy') < 0.4_R8P*NAP .or. &
+    mpih%timer%elapsed_cpu('busy') > mpih%timer%elapsed('busy') + NAP) call fail('CPU seconds of busy')
+if (mpih%timer%elapsed_cpu('idle') > 2*NAP) call fail('a sleep must use little CPU')
+b = mpih%timer%index_of('busy') ; d = mpih%timer%index_of('idle')
+call mpih%timer%statistics(t_min=t_min, t_mean=t_mean, t_max=t_max, calls=calls, per_call=per_call, cpu_wall=cpu_wall, &
+                           misuse=misuse, unknown_stops=unknown_stops)
+if (calls(b) /= mpih%procs_number .or. calls(d) /= mpih%procs_number) call fail('calls of all the ranks')
+if (abs(per_call(b) - t_mean(b)) > 1.e-9_R8P) call fail('with one call per rank the mean of a call is the mean')
+if (cpu_wall(b) < 0.2_R8P .or. cpu_wall(b) > 1.5_R8P) call fail('CPU/wall of busy out of [0.2, 1.5]')
+if (cpu_wall(d) > 0.5_R8P .or. cpu_wall(d) >= cpu_wall(b)) call fail('CPU/wall of idle must be small, below busy')
+if (any(misuse /= 0_I8P) .or. unknown_stops /= 0_I8P) call fail('no misuse yet')
+! misuses: a stop of a stopped timer, a start of a running one, a stop of a name never started
+t = mpih%toc(name='busy')
+if (t > 0._R8P .or. mpih%timer%misuses() /= 1_I8P) call fail('stop of a stopped timer')
+call mpih%tic(name='busy') ; call mpih%tic(name='busy') ; t = mpih%toc(name='busy')
+if (mpih%timer%misuses() /= 2_I8P .or. mpih%timer%calls(b) /= 2_I8P) call fail('start of a running timer')
+t = mpih%toc(name='nobody') ! its own statement: the operands of an expression are evaluated in any order
+if (t > 0._R8P .or. mpih%timer%misuses() /= 3_I8P .or. mpih%timer%unknown_stops /= 1_I8P) &
+   call fail('stop of a name never started')
+call mpih%timer%statistics(t_min=t_min, t_mean=t_mean, t_max=t_max, calls=calls, misuse=misuse, unknown_stops=unknown_stops)
+if (misuse(b) /= 2*mpih%procs_number .or. misuse(d) /= 0 .or. unknown_stops /= mpih%procs_number) &
+   call fail('misuses of all the ranks')
+if (calls(b) /= 2*mpih%procs_number) call fail('calls of busy after the misuses')
+text = mpih%timer%report_string()
+if (index(text, 'misuse: '//trim(adjustl(int_string(2*mpih%procs_number)))//' mismatched start/stop of "busy"') == 0 .or. &
+    index(text, 'never started') == 0 .or. index(text, 'cpu/wall') == 0 .or. index(text, 'per call') == 0) &
+   call fail('report with misuses: '//text)
+! CSV: the consistency line, the header, one line per timer and the unknown stops
+text = mpih%timer%report_csv_string()
+lines = 1 ; do i=1, len(text) ; if (text(i:i) == new_line('a')) lines = lines + 1 ; enddo
+if (index(text, '# consistent,true') /= 1 .or. lines /= mpih%timer%timers_number + 3) call fail('CSV lines: '//text)
+if (index(text, 'timer,calls,min_s,mean_s,max_s,max_over_mean,per_call_s,cpu_over_wall,misuses') == 0) call fail('CSV header')
+if (index(text, '"busy",'//trim(adjustl(int_string(2*mpih%procs_number)))//',') == 0) call fail('CSV line of busy: '//text)
+if (index(text, '"(unknown stops)",0,,,,,,,'//trim(adjustl(int_string(mpih%procs_number)))) == 0) call fail('CSV unknown')
+call mpih%timer%reset
+if (mpih%timer%misuses() /= 0_I8P) call fail('reset of all must zero the misuses')
 ! a timer of one rank only: inconsistent when there are more ranks
 if (mpih%is_root()) call mpih%tic(name='root only')
 text = mpih%timer%report_string()
@@ -101,6 +157,14 @@ if ((index(text, 'differ') /= 0) .neqv. (mpih%procs_number > 1)) call fail('repo
 call mpih%print_message('herald_test_timers_mpi: ok', root_only=.true.)
 call mpih%finalize
 contains
+   function int_string(n) result(s)
+   !< Integer to string.
+   integer(I4P), intent(in) :: n !< Number.
+   character(12)            :: s !< String.
+
+   write(s, '(I0)') n
+   endfunction int_string
+
    subroutine fail(msg)
    !< Stop every rank with a message.
    character(*), intent(in) :: msg !< Message.

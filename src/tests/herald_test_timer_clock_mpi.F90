@@ -41,6 +41,7 @@ else
    if (t < NAP .or. timer%calls(1) /= 1_I8P) call fail('without MPI there is one clock: the interval is measured')
 endif
 if (timer%is_running(1)) call fail('the timer must be stopped')
+if (timer%misuses() /= merge(1_I8P, 0_I8P, HERALD_HAS_MPI)) call fail('a change of clock is a misuse, counted once')
 call timer%start(name='across')
 cerr = c_usleep(int(NAP*1.e6_R8P, C_INT))
 t = timer%stop(name='across')
