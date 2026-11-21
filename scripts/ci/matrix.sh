@@ -12,3 +12,9 @@ if [[ "$TOOLCHAIN_FAMILY" == gnu ]]; then
   fobis build --mode tests-gnu-omp
   bash scripts/run_tests.sh --exe-dir exe-omp
 fi
+# the OpenACC device layer (-DHERALD_OAC): built with nvfortran -acc and run on the host device type, which the
+# variable asks for explicitly (the hosted runners have no GPU; the device branch runs only on a machine with one)
+if [[ "$TOOLCHAIN_FAMILY" == nvf ]]; then
+  fobis build --mode tests-nvf-oac
+  ACC_DEVICE_TYPE=host bash scripts/run_tests.sh --exe-dir exe-oac
+fi
