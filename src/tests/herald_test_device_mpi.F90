@@ -17,6 +17,7 @@ if (device%is_host) then
    if (device%devices_number /= 0 .or. device%mydev /= -1 .or. device%sharers /= 1) call fail('host: no device, 1 sharer')
    if (device%per_sharer() /= -1_I8P) call fail('host: unknown budget')
    if (associated(mpih%timer%device_sync)) call fail('host: the timers must not wait for a device')
+   if (device%devtype /= HERALD_DEVICE_HOST) call fail('host: the device type must be the host')
 else
    if (device%mydev /= mod(mpih%node_myrank, device%devices_number)) call fail('device is not mod(node rank, devices)')
    if (device%sharers < 1 .or. device%sharers > mpih%node_procs_number) call fail('sharers out of [1, node ranks]')
@@ -24,8 +25,11 @@ else
       if (device%per_sharer() /= device%memory_total/device%sharers) call fail('budget is not total/sharers')
    endif
    if (.not.associated(mpih%timer%device_sync)) call fail('the timers must wait for the device')
+   if (device%devtype == HERALD_DEVICE_HOST) call fail('a device of the host type')
    call device%sync
 endif
+if (lbound(mpih%req_send_recv, 1) /= 0 .or. size(mpih%req_send_recv) /= 2*mpih%procs_number) call fail('req_send_recv')
+if ((HERALD_DEVICE_RUNTIME == 'none') .neqv. (device%myhos == -1)) call fail('host device number')
 if (index(mpih%description(), 'device ('//HERALD_DEVICE_RUNTIME//')') == 0) call fail('description without the device')
 endassociate
 call mpih%print_message('herald_test_device_mpi: ok ('//HERALD_DEVICE_RUNTIME//', '// &

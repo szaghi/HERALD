@@ -40,6 +40,7 @@ type :: mpih_object
    integer(I4P)              :: node_procs_number=1_I4P    !< Ranks of `node_comm`: those sharing this node's memory.
    character(:), allocatable :: myrankstr                  !< Rank prefix of the messages, `[mpi-00000]`.
    integer(I4P)              :: error=0_I4P                !< Error status of the last operation.
+   integer(I4P), allocatable :: req_send_recv(:)           !< MPI requests of the program's sends and receives, (0:2*procs_number-1).
    logical                   :: is_initialized=.false.     !< `initialize` ran: later calls return at once.
    logical                   :: owns_mpi=.false.           !< `initialize` initialized MPI: `finalize` finalizes it.
    type(device_object)       :: device                     !< Device of the rank (`initialize(do_device_init=.true.)`).
@@ -169,6 +170,7 @@ contains
 
    do_mpi_finalize_ = self%owns_mpi ; if (present(do_mpi_finalize)) do_mpi_finalize_ = do_mpi_finalize
    call hmpi_free(self%node_comm)
+   if (allocated(self%req_send_recv)) deallocate(self%req_send_recv)
    if (do_mpi_finalize_) call hmpi_stop
    self%is_initialized = .false.
    self%owns_mpi = .false.
@@ -183,7 +185,8 @@ contains
    !< the run stops if it has not.
    !<
    !< `do_device_init=.true.` binds the rank to a device (see `device_object`) and makes the timers wait for the
-   !< device's asynchronous work; with `require_device=.true.` the run stops if there is no device.
+   !< device's asynchronous work; with no device the run continues on the host with a warning, or stops if a device is
+   !< required, by `require_device=.true.` or by the environment (FUNDAL's host-fallback policy).
    class(mpih_object), intent(inout)        :: self                   !< MPI handler.
    integer(I4P),       intent(in), optional :: comm                   !< Communicator (default: all the ranks).
    logical,            intent(in), optional :: do_mpi_init            !< Initialize MPI if nobody has (default .true.).
@@ -194,6 +197,8 @@ contains
    logical                                  :: do_mpi_init_           !< Initialize MPI, local variable.
    integer(I4P)                             :: myrankstr_char_length_ !< Digits of the rank, local variable.
    logical                                  :: verbose_               !< Print the description, local variable.
+   integer(I4P)                             :: device_error           !< Error of the device binding.
+   character(:), allocatable                :: device_msg             !< Error or warning of the device binding.
 
    if (self%is_initialized) return
    do_mpi_init_ = .true. ; if (present(do_mpi_init)) do_mpi_init_ = do_mpi_init
@@ -213,19 +218,18 @@ contains
    call hmpi_split_node(comm=self%comm, node_comm=self%node_comm)
    self%node_myrank = hmpi_rank(self%node_comm)
    self%node_procs_number = max(1_I4P, hmpi_size(self%node_comm))
+   if (allocated(self%req_send_recv)) deallocate(self%req_send_recv)
+   allocate(self%req_send_recv(0:2*self%procs_number-1), source=0_I4P)
    call self%timer%initialize(comm=self%comm)
    call self%memory%initialize(comm=self%comm, node_procs_number=self%node_procs_number)
    self%memory_avail = real(self%memory%per_rank(), R8P)/1024._R8P**3
    if (present(do_device_init)) then
       if (do_device_init) then
-         call self%device%initialize(node_comm=self%node_comm, node_myrank=self%node_myrank)
-         if (self%device%is_host) then
-            if (present(require_device)) then
-               if (require_device) call self%error_stop(msg='mpih_object%initialize: no device, and one is required')
-            endif
-         else
-            call self%timer%set_device_sync(device_sync=devb_sync)
-         endif
+         call self%device%initialize(node_comm=self%node_comm, node_myrank=self%node_myrank, &
+                                     require_device=require_device, error=device_error, msg=device_msg)
+         if (device_error /= 0_I4P) call self%error_stop(msg='mpih_object%initialize: '//device_msg)
+         if (len(device_msg) > 0) call self%warning(msg=device_msg)
+         if (.not.self%device%is_host) call self%timer%set_device_sync(device_sync=devb_sync)
       endif
    endif
    self%is_initialized = .true.

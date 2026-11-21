@@ -34,7 +34,7 @@ modes = static-gnu shared-gnu
         static-nvf shared-nvf
         static-intel shared-intel
         static-gnu-serial static-nvf-serial static-intel-serial
-        tests-gnu tests-gnu-debug tests-gnu-coverage tests-gnu-serial
+        tests-gnu tests-gnu-debug tests-gnu-coverage tests-gnu-serial tests-gnu-omp
         tests-nvf tests-nvf-debug tests-nvf-serial tests-nvf-oac static-nvf-oac
         tests-intel tests-intel-debug
 
@@ -131,6 +131,16 @@ template  = template-tests template-gnu template-mpi template-debug
 help      = Tests, gfortran + MPI, coverage instrumentation (rule makecoverage)
 template  = template-tests template-gnu template-mpi
 build_profile = coverage
+
+# the OpenMP target device layer (-DHERALD_OMP), compiled with gfortran -fopenmp: with no offload compiler and no
+# accelerator the default device is the host, so this mode builds the layer and runs its host branch (CI: matrix, gnu)
+[tests-gnu-omp]
+help      = Tests, gfortran + MPI, OpenMP target device layer (host branch where there is no offload device)
+template  = template-tests template-gnu template-mpi template-release
+preproc   = -DHERALD_OMP
+cflags    = -c $STD_GNU -fopenmp
+lflags    = -fopenmp
+build_dir = exe-omp/
 
 [tests-gnu-serial]
 help      = Tests, gfortran, serial (no MPI), optimised
@@ -240,4 +250,4 @@ rule_1 = cd docs && npm install --no-audit --no-fund && npm run docs:build
 
 [rule-clean]
 help = Remove build products and documentation artefacts
-rule = rm -rf exe/ exe-oac/ lib/ obj/ mod/ docs/api/ docs/.vitepress/dist/ docs/.vitepress/cache/ docs/public/coverage.json
+rule = rm -rf exe/ exe-oac/ exe-omp/ lib/ obj/ mod/ docs/api/ docs/.vitepress/dist/ docs/.vitepress/cache/ docs/public/coverage.json

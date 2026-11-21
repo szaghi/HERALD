@@ -6,6 +6,7 @@
 # build products of the fobos modes
 /exe/
 /exe-oac/
+/exe-omp/
 /lib/
 /obj/
 /mod/

@@ -7,3 +7,8 @@ set -euo pipefail
 echo "toolchain: $TOOLCHAIN ($TOOLCHAIN_OS, $TOOLCHAIN_FAMILY), FC=$FC"
 fobis build --mode "tests-$TOOLCHAIN_FAMILY"
 bash scripts/run_tests.sh
+# the OpenMP target device layer (-DHERALD_OMP): built and run where gfortran is, on the host branch
+if [[ "$TOOLCHAIN_FAMILY" == gnu ]]; then
+  fobis build --mode tests-gnu-omp
+  bash scripts/run_tests.sh --exe-dir exe-omp
+fi

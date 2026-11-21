@@ -50,8 +50,12 @@ The type keeps its name, `mpih_object`, and `initialize`, `finalize`, `print_mes
 
 - `finalize` ends MPI only if the handler initialized it; a program that calls `MPI_INIT` itself passes
   `do_mpi_finalize=.true.` or calls `MPI_FINALIZE` itself;
-- the device data are in `mpih%device` (`mydev`, `devices_number`), the node communicator is `node_comm`;
-- CUDA Fortran data (ADAM's `mpih_nvf_object`) are not in HERALD.
+- the device data are in `mpih%device`; FUNDAL's names map as `devs_number` → `device%devices_number`, `mydev` →
+  `device%mydev`, `myhos` → `device%myhos`, `devtype` → `device%devtype`, `dev_memory_total` → `device%memory_total`,
+  `dev_memory_avail` → `device%memory_free`, `local_comm` → `node_comm`, `hos_memory_avail` → `memory%per_rank()`
+  (bytes) or `memory_avail` (GB);
+- FUNDAL's host-fallback policy is kept: with no device the run continues on the host with one warning, and stops if
+  a device is required by `require_device=.true.`, `ACC_DEVICE_TYPE` or `OMP_TARGET_OFFLOAD=MANDATORY`.
 
 ## Tests
 
@@ -63,4 +67,4 @@ fobis rule --ex makecoverage-analysis   # what CI runs: coverage into docs/publi
 ```
 
 `exe/` is shared by the test modes: clean before switching mode or compiler. `tests-nvf-oac` builds the OpenACC device
-layer into `exe-oac/`.
+layer into `exe-oac/`, `tests-gnu-omp` the OpenMP target one into `exe-omp/` (`bash scripts/run_tests.sh --exe-dir exe-omp`).
