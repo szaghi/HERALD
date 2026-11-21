@@ -48,6 +48,7 @@ type :: mpih_object
    real(R8P)                 :: memory_avail=0._R8P        !< Host memory budget of the rank at `initialize`, GB.
    type(timer_object)        :: timer                      !< Named timers, reduced over the ranks of `comm`.
    real(R8P)                 :: timing(1:2)=0._R8P         !< Clock at the two last timed barriers (`barrier(tictoc=)`).
+   integer(I4P)              :: timing_clock(1:2)=-1_I4P   !< Clocks that answered `timing` (see `hmpi_wtime`).
    integer(I4P)              :: tictoc=1_I4P               !< Slot of `timing` the next timed barrier fills.
    contains
       procedure, pass(self) :: abort         !< Stop every rank with an error code and an optional message.
@@ -103,7 +104,7 @@ contains
    call hmpi_barrier(self%comm)
    if (present(timing)) timing = 0._R8P
    if (tictoc_) then
-      self%timing(self%tictoc) = hmpi_wtime()
+      self%timing(self%tictoc) = hmpi_wtime(clock=self%timing_clock(self%tictoc))
       if (present(timing)) timing = self%timing(self%tictoc)
       if (.not.single_) self%tictoc = 3_I4P - self%tictoc
    endif
@@ -298,7 +299,8 @@ contains
    class(mpih_object), intent(in) :: self   !< MPI handler.
    real(R8P)                      :: timing !< Seconds between the two clocks.
 
-   timing = abs(self%timing(2) - self%timing(1))
+   timing = 0._R8P ! readings of different clocks (MPI began or ended between them) have no difference
+   if (self%timing_clock(1) == self%timing_clock(2)) timing = abs(self%timing(2) - self%timing(1))
    endfunction tictoc_timing
 
    function toc(self, name, sync) result(timing)

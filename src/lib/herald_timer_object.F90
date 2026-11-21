@@ -41,6 +41,7 @@ type :: timer_object
    real(R8P),                 allocatable     :: last(:)               !< Seconds of the last completed pair.
    real(R8P),                 allocatable     :: t0(:)                 !< Clock at the last start.
    logical,                   allocatable     :: is_running(:)         !< Started and not yet stopped.
+   integer(I4P),              allocatable     :: clock(:)              !< Clock that answered the last start.
    procedure(device_sync_interface), pointer, nopass :: device_sync=>null() !< Device synchronization, if any.
    contains
       procedure, pass(self) :: elapsed         !< Return the accumulated seconds of a timer on this rank.
@@ -90,7 +91,8 @@ contains
 
    self%comm = comm
    self%timers_number = 0_I4P
-   if (allocated(self%name)) deallocate(self%name, self%calls, self%total, self%last, self%t0, self%is_running)
+   if (allocated(self%name)) deallocate(self%name, self%calls, self%total, self%last, self%t0, self%is_running, &
+                                        self%clock)
    endsubroutine initialize
 
    function is_consistent(self)
@@ -199,7 +201,7 @@ contains
    endif
    call synchronize(self=self, sync=sync)
    self%is_running(t) = .true.
-   self%t0(t) = hmpi_wtime()
+   self%t0(t) = hmpi_wtime(clock=self%clock(t))
    endsubroutine start
 
    subroutine statistics(self, t_min, t_mean, t_max, is_consistent)
@@ -228,19 +230,26 @@ contains
 
    function stop(self, name, sync) result(seconds)
    !< Stop a timer and add the interval to its total; return the interval (0 if the timer is not running).
+   !<
+   !< An interval started before `MPI_INIT` and stopped after it (or across `MPI_FINALIZE`) is discarded, 0 returned:
+   !< its two readings come from different clocks (see `hmpi_wtime`).
    class(timer_object), intent(inout)        :: self    !< Timers.
    character(*),        intent(in)           :: name    !< Timer name.
    logical,             intent(in), optional :: sync    !< Barrier on the communicator first (default .false.).
    real(R8P)                                 :: seconds !< Seconds from the start.
    integer(I4P)                              :: t       !< Timer index.
+   real(R8P)                                 :: now     !< Clock at the stop.
+   integer(I4P)                              :: clock   !< Clock that answered the stop.
 
    seconds = 0._R8P
    t = self%index_of(name)
    if (t == 0) return
    if (.not.self%is_running(t)) return
    call synchronize(self=self, sync=sync)
-   seconds = hmpi_wtime() - self%t0(t)
+   now = hmpi_wtime(clock=clock)
    self%is_running(t) = .false.
+   if (clock /= self%clock(t)) return ! started on another clock (MPI began or ended since): no interval to measure
+   seconds = now - self%t0(t)
    self%last(t) = seconds
    self%total(t) = self%total(t) + seconds
    self%calls(t) = self%calls(t) + 1_I8P
@@ -254,24 +263,28 @@ contains
    integer(I8P),              allocatable :: calls(:)   !< Larger calls.
    real(R8P),                 allocatable :: total(:), last(:), t0(:) !< Larger reals.
    logical,                   allocatable :: is_running(:) !< Larger flags.
+   integer(I4P),              allocatable :: clock(:)   !< Larger clocks.
    integer(I4P)                           :: n, capacity !< Number of timers, new capacity.
 
    n = self%timers_number
    capacity = 0_I4P ; if (allocated(self%name)) capacity = size(self%name)
    if (n == capacity) then
       capacity = max(16_I4P, 2_I4P*capacity)
-      allocate(name(capacity), calls(capacity), total(capacity), last(capacity), t0(capacity), is_running(capacity))
+      allocate(name(capacity), calls(capacity), total(capacity), last(capacity), t0(capacity), is_running(capacity), &
+               clock(capacity))
       if (n > 0) then
          name(1:n) = self%name(1:n) ; calls(1:n) = self%calls(1:n) ; total(1:n) = self%total(1:n)
          last(1:n) = self%last(1:n) ; t0(1:n) = self%t0(1:n) ; is_running(1:n) = self%is_running(1:n)
+         clock(1:n) = self%clock(1:n)
       endif
       call move_alloc(name, self%name) ; call move_alloc(calls, self%calls) ; call move_alloc(total, self%total)
       call move_alloc(last, self%last) ; call move_alloc(t0, self%t0) ; call move_alloc(is_running, self%is_running)
+      call move_alloc(clock, self%clock)
    endif
    n = n + 1_I4P
    self%timers_number = n
    self%name(n) = '' ; self%calls(n) = 0_I8P ; self%total(n) = 0._R8P ; self%last(n) = 0._R8P ; self%t0(n) = 0._R8P
-   self%is_running(n) = .false.
+   self%is_running(n) = .false. ; self%clock(n) = HERALD_CLOCK_SYSTEM
    endsubroutine grow
 
    subroutine synchronize(self, sync)

@@ -14,6 +14,8 @@ use, intrinsic :: ieee_exceptions, only : ieee_get_halting_mode, ieee_set_haltin
 use            :: herald_kinds,    only : I4P, I8P, R8P
 implicit none
 private
+public :: HERALD_CLOCK_MPI
+public :: HERALD_CLOCK_SYSTEM
 public :: HERALD_COMM_NULL
 public :: HERALD_COMM_WORLD
 public :: HERALD_HAS_MPI
@@ -39,6 +41,9 @@ logical,      parameter :: HERALD_HAS_MPI    = .false.        !< The library is 
 integer(I4P), parameter :: HERALD_COMM_WORLD = 0_I4P          !< The communicator of the single rank.
 integer(I4P), parameter :: HERALD_COMM_NULL  = -1_I4P         !< The null communicator.
 #endif
+
+integer(I4P), parameter :: HERALD_CLOCK_SYSTEM = 0_I4P !< `hmpi_wtime` read `system_clock`.
+integer(I4P), parameter :: HERALD_CLOCK_MPI    = 1_I4P !< `hmpi_wtime` read `MPI_WTIME`.
 
 contains
    subroutine hmpi_abort(error_code)
@@ -204,14 +209,21 @@ contains
 #endif
    endsubroutine hmpi_stop
 
-   function hmpi_wtime() result(seconds)
-   !< Return the wall-clock time in seconds (`MPI_WTIME`; `system_clock` without MPI or outside its life).
-   real(R8P)    :: seconds     !< Wall-clock time from an arbitrary origin.
-   integer(I8P) :: count, rate !< Clock count and counts per second.
+   function hmpi_wtime(clock) result(seconds)
+   !< Return the wall-clock time in seconds: `MPI_WTIME` while MPI is active, `system_clock` otherwise.
+   !<
+   !< The two clocks have different origins: the difference of two readings means something only if both came from
+   !< the same clock. `clock` tells which one answered (`HERALD_CLOCK_MPI` or `HERALD_CLOCK_SYSTEM`): a caller that
+   !< keeps a reading across `MPI_INIT` or `MPI_FINALIZE` must compare the clocks before subtracting.
+   integer(I4P), intent(out), optional :: clock       !< The clock that answered.
+   real(R8P)                           :: seconds     !< Wall-clock time from the clock's own origin.
+   integer(I8P)                        :: count, rate !< Clock count and counts per second.
 
+   if (present(clock)) clock = HERALD_CLOCK_SYSTEM
 #ifndef HERALD_NO_MPI
    if (hmpi_is_active()) then
       seconds = MPI_WTIME()
+      if (present(clock)) clock = HERALD_CLOCK_MPI
       return
    endif
 #endif
