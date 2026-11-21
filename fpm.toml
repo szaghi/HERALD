@@ -37,3 +37,18 @@ main = "herald_test_kinds.F90"
 name = "herald_test_toolchain_mpi"
 source-dir = "src/tests"
 main = "herald_test_toolchain_mpi.F90"
+
+[[test]]
+name = "herald_test_strings"
+source-dir = "src/tests"
+main = "herald_test_strings.F90"
+
+[[test]]
+name = "herald_test_core_mpi"
+source-dir = "src/tests"
+main = "herald_test_core_mpi.F90"
+
+[[test]]
+name = "herald_test_comm_mpi"
+source-dir = "src/tests"
+main = "herald_test_comm_mpi.F90"
