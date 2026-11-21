@@ -1,0 +1,2 @@
+$ mpirun --oversubscribe -np 2 t02_errors 2>&1 | grep 'mpi-'
+[mpi-00001]error stop the mesh of this rank is empty

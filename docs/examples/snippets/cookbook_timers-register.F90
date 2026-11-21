@@ -1,0 +1,3 @@
+call mpih%timer%set_device_sync(device_sync=my_device_sync)
+call mpih%tic(name='kernel')   ! my_device_sync is called here ...
+seconds = mpih%toc(name='kernel') ! ... and here

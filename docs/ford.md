@@ -4,7 +4,7 @@ summary: HPC Environment, Ranks, Accounting, Logging, Devices: the MPI handler o
 project_url: https://szaghi.github.io/HERALD
 author: Stefano Zaghi
 email: stefano.zaghi@gmail.com
-src_dir: ../src
+src_dir: ../src/lib
 output_dir: ./docs/ford
 project_github: https://github.com/szaghi/HERALD
 display: public

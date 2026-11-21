@@ -1,0 +1,7 @@
+$ mpirun --oversubscribe -np 2 cookbook_timers
+device synchronizations: 2
+misuses on this rank:    2
+# consistent,true
+timer,calls,misuses
+"kernel",2,2
+"(unknown stops)",0,2

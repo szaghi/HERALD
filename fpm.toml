@@ -74,11 +74,6 @@ source-dir = "src/tests"
 main = "herald_test_device_mpi.F90"
 
 [[test]]
-name = "herald_test_quickstart_mpi"
-source-dir = "src/tests"
-main = "herald_test_quickstart_mpi.F90"
-
-[[test]]
 name = "herald_test_timer_clock_mpi"
 source-dir = "src/tests"
 main = "herald_test_timer_clock_mpi.F90"

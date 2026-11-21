@@ -1,0 +1,2 @@
+$ mpirun --oversubscribe -np 2 cookbook_own_mpi
+the handler owns MPI: F

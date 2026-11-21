@@ -14,6 +14,7 @@ authors    = Stefano Zaghi
 toolchain = linux-gnu
 matrix    = linux-gnu linux-nvhpc linux-oneapi
 fpm       = true
+docs_examples = docs/examples
 
 # the one-line installer (scripts/install.sh, rendered by fobis scaffold) builds the serial library, as fpm does: it
 # runs where no MPI may be (a fresh machine, the release's install check), and an MPI library must be built against
@@ -243,6 +244,10 @@ rule_3 = bash scripts/run_tests.sh
 help   = Coverage analysis: the badge JSON in docs/public/coverage.json (what CI runs)
 rule_1 = fobis rule --ex makecoverage
 rule_2 = bash scripts/compute-coverage.sh
+
+[rule-docs-examples]
+help = Build and run the documentation examples, regenerating docs/examples/snippets and docs/examples/output
+rule = bash scripts/docs_examples.sh
 
 [rule-makedoc]
 help   = Build the documentation: formal API + VitePress

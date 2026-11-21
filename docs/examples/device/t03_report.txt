@@ -1,0 +1,3 @@
+$ mpirun -np 2 t03_timers && cat timers.txt
+timer                                                   calls       min [s]      mean [s]       max [s]  max/mean  per call [s]  cpu/wall
+solve                                                       6  6.299810E-02  9.306658E-02  1.231351E-01     1.323  3.102219E-02     0.004

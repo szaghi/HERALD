@@ -1,0 +1,4 @@
+$ mpirun --oversubscribe -np 4 t05_comm
+ranks of the run:            4
+ranks of my half:            2
+the half owns MPI:           F

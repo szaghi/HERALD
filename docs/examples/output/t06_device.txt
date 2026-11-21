@@ -1,0 +1,7 @@
+$ mpirun --oversubscribe -np 2 t06_device 2>&1
+device runtime of this build: none
+running on the host:          T
+devices:                      0
+my device:                    -1
+ranks on my device:           1
+timers wait for the device:   F

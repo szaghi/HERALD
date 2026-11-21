@@ -1,0 +1,9 @@
+$ mpirun --oversubscribe -np 2 t03_timers
+calls of all the ranks:        6
+fastest rank at least 60 ms:   T
+slowest rank at least 120 ms:  T
+imbalance max/mean above 1.2:  T
+a call takes 30 ms or more:    T
+CPU/wall below 0.5 (sleeping): T
+# consistent,true
+misuses on this rank: none

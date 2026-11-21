@@ -1,0 +1,7 @@
+$ mpirun --oversubscribe -np 3 t01_ranks | sort
+[mpi-00]warning: warnings go to the standard error
+[mpi-00]hello
+[mpi-00]ranks of the run: 3
+[mpi-00]ranks on my node: 3
+[mpi-01]hello
+[mpi-02]hello

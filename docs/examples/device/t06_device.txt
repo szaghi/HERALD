@@ -1,0 +1,7 @@
+$ mpirun -np 3 t06_device        (HERALD built with -DHERALD_OAC, nvfortran 26.9; two GPUs on the node)
+device runtime of this build: openacc
+running on the host:          F
+devices:                      2
+my device:                    0
+ranks on my device:           2
+timers wait for the device:   T

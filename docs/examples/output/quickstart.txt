@@ -1,0 +1,3 @@
+$ mpirun --oversubscribe -np 2 quickstart
+[mpi-00000]ranks: two
+[mpi-00000]done

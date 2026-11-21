@@ -1,0 +1,8 @@
+$ mpirun --oversubscribe -np 2 t04_memory
+the budget is known:                  T
+it is the limit over the node ranks:  T
+the limit is the node or the cgroup:  T
+the budget plus one byte fits:        F
+the 64 MB of the pool are in use:     T
+the peak is not below the use:        T
+the cells are sized from the budget:  T

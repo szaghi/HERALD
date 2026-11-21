@@ -1,0 +1,2 @@
+$ mpirun --oversubscribe -np 2 t02_errors > /dev/null 2>&1; echo "exit status: $?"
+exit status: 1
