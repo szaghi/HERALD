@@ -67,3 +67,8 @@ main = "herald_test_memory_readers.F90"
 name = "herald_test_memory_mpi"
 source-dir = "src/tests"
 main = "herald_test_memory_mpi.F90"
+
+[[test]]
+name = "herald_test_device_mpi"
+source-dir = "src/tests"
+main = "herald_test_device_mpi.F90"

@@ -8,6 +8,8 @@ module herald_mpih_object
 !< The library exports the type, not an instance: the program owns its handler.
 use, intrinsic :: iso_c_binding,   only : C_INT
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit, stdout=>output_unit
+use            :: herald_device_backend, only : devb_sync
+use            :: herald_device_object,  only : device_object
 use            :: herald_kinds,    only : I4P, I8P, R8P
 use            :: herald_memory_object, only : memory_object
 use            :: herald_mpi
@@ -40,6 +42,7 @@ type :: mpih_object
    integer(I4P)              :: error=0_I4P                !< Error status of the last operation.
    logical                   :: is_initialized=.false.     !< `initialize` ran: later calls return at once.
    logical                   :: owns_mpi=.false.           !< `initialize` initialized MPI: `finalize` finalizes it.
+   type(device_object)       :: device                     !< Device of the rank (`initialize(do_device_init=.true.)`).
    type(memory_object)       :: memory                     !< Host memory: the budget of the rank and its use.
    real(R8P)                 :: memory_avail=0._R8P        !< Host memory budget of the rank at `initialize`, GB.
    type(timer_object)        :: timer                      !< Named timers, reduced over the ranks of `comm`.
@@ -132,7 +135,8 @@ contains
    desc = desc//p//'  procs_number:      '//str(self%procs_number)//NL
    desc = desc//p//'  node myrank:       '//str(self%node_myrank)//NL
    desc = desc//p//'  node procs_number: '//str(self%node_procs_number)//NL
-   desc = desc//self%memory%description(prefix=p)
+   desc = desc//self%memory%description(prefix=p)//NL
+   desc = desc//self%device%description(prefix=p)
    endfunction description
 
    subroutine error_stop(self, msg)
@@ -170,18 +174,23 @@ contains
    self%owns_mpi = .false.
    endsubroutine finalize
 
-   subroutine initialize(self, comm, do_mpi_init, myrankstr_char_length, verbose)
+   subroutine initialize(self, comm, do_mpi_init, do_device_init, myrankstr_char_length, verbose, require_device)
    !< Initialize the handler (once), and MPI if nobody has.
    !<
    !< Once-only: a later call returns at once, so that every layer of a program (application, library, test driver) can
    !< call it without repeating the work or leaking a communicator (ADAM issue #80). MPI is initialized on demand, with
    !< the floating-point traps off (see `hmpi_start`); `do_mpi_init=.false.` states that the caller has done it, and
    !< the run stops if it has not.
+   !<
+   !< `do_device_init=.true.` binds the rank to a device (see `device_object`) and makes the timers wait for the
+   !< device's asynchronous work; with `require_device=.true.` the run stops if there is no device.
    class(mpih_object), intent(inout)        :: self                   !< MPI handler.
    integer(I4P),       intent(in), optional :: comm                   !< Communicator (default: all the ranks).
    logical,            intent(in), optional :: do_mpi_init            !< Initialize MPI if nobody has (default .true.).
+   logical,            intent(in), optional :: do_device_init         !< Bind the rank to a device (default .false.).
    integer(I4P),       intent(in), optional :: myrankstr_char_length  !< Digits of the rank in the prefix (default 5).
    logical,            intent(in), optional :: verbose                !< Print the description (default .false.).
+   logical,            intent(in), optional :: require_device         !< Stop if there is no device (default .false.).
    logical                                  :: do_mpi_init_           !< Initialize MPI, local variable.
    integer(I4P)                             :: myrankstr_char_length_ !< Digits of the rank, local variable.
    logical                                  :: verbose_               !< Print the description, local variable.
@@ -207,6 +216,18 @@ contains
    call self%timer%initialize(comm=self%comm)
    call self%memory%initialize(comm=self%comm, node_procs_number=self%node_procs_number)
    self%memory_avail = real(self%memory%per_rank(), R8P)/1024._R8P**3
+   if (present(do_device_init)) then
+      if (do_device_init) then
+         call self%device%initialize(node_comm=self%node_comm, node_myrank=self%node_myrank)
+         if (self%device%is_host) then
+            if (present(require_device)) then
+               if (require_device) call self%error_stop(msg='mpih_object%initialize: no device, and one is required')
+            endif
+         else
+            call self%timer%set_device_sync(device_sync=devb_sync)
+         endif
+      endif
+   endif
    self%is_initialized = .true.
    if (verbose_) print '(A)', self%description()
    endsubroutine initialize
